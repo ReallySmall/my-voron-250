@@ -16,34 +16,41 @@ M586 P1 S0                                     ; disable FTP
 M586 P2 S0                                     ; disable Telnet
 
 ; Drives
-M569 P0 S1                                     ; physical drive 0 goes forwards
-M569 P1 S1                                     ; physical drive 1 goes forwards
-M569 P2 S0                                     ; physical drive 2 goes backwards
-M569 P3 S1                                     ; physical drive 3 goes forwards
-M584 X0 Y1 Z2 E3                               ; set drive mapping
-M350 E16 I0                                    ; configure microstepping without interpolation
+M569 P0 S1                                     ; physical drive 0 goes forwards (X)
+M569 P1 S1                                     ; physical drive 1 goes forwards (Y)
+M569 P2 S0                                     ; physical drive 2 goes backwards (Z front-left)
+M569 P3 S0                                     ; physical drive 3 goes backwards (Z front-right) - direction verified on hardware
+M569 P4 S0                                     ; physical drive 4 goes backwards (Z rear-centre) - direction verified; struggles lifting vs lowering, check coupler/leadscrew for binding
+M569 P5 S1 R1 T2.5:2.5:5:0                     ; external driver 5 on expansion header (E) - enable polarity R and step timing T per driver datasheet
+M584 X0 Y1 Z2:3:4 E5                           ; set drive mapping - triple Z on drives 2,3,4; extruder on expansion drive 5
+M350 E16 I0                                    ; E microstepping - informational only for external driver, must match the setting on the driver itself
 M350 X16 Y16 Z16 I1                        	   ; configure microstepping with interpolation
 M92 X80.00 Y80.00 Z400.00 E392.00              ; set steps per mm
 M566 X900.00 Y900.00 Z60.00 E120.00            ; set maximum instantaneous speed changes (mm/min)
 M203 X11000.00 Y11000.00 Z1000.00 E1200.00     ; set maximum speeds (mm/min)
 M201 X800.00 Y800.00 Z40.00 E350.00            ; set accelerations (mm/s^2)
-M906 X850 Y850 Z850 E850 I30                   ; set motor currents (mA) and motor idle factor in per cent
+M906 X850 Y850 Z850 I30                        ; set motor currents (mA) and idle factor - E current is set on the external driver, not here
 M84 S30                                        ; Set idle timeout
 M915 X Y Z S5 R2							   ; set stall detection
 
 ; Axis Limits
 M208 X0 Y0 Z0 S1                               ; set axis minima
-M208 X150 Y150 Z150 S0                         ; set axis maxima
+M208 X256 Y256 Z150 S0                         ; set axis maxima (256mm square bed)
 
 ; Endstops
 M574 X2 S1 P"xstop"                           ; configure active-high endstop for high end on X via pin !xstop
 M574 Y2 S1 P"ystop"                           ; configure active-high endstop for low end on Y via pin !ystop
-M574 Z1 S1 P"zstop"                           ; configure active-high endstop for high end on Z via pin !zstop
+M574 Z1 S2                                    ; configure Z to use the probe (no Z endstop switch)
 
 ; Z-Probe
 M558 P1 C"zprobe.in+zprobe.mod" H5 F120 T6000  ; Z probe but set dive height, probe speed and travel speed
-M557 X15:150 Y15:150 S20                       ; define mesh grid
+M557 X15:240 Y15:240 S25                       ; define mesh grid
 G31 Z2.29									   ; set z trigger offset
+
+; Bed leveling (triple Z)
+; Lead screw positions in M584 Z order: drive 2 = front-left, drive 3 = front-right, drive 4 = rear-centre
+; NOMINAL coordinates - measure the real lead screw positions and correct these
+M671 X-10:266:128 Y-10:-10:266 S5              ; lead screw positions front-left, front-right, rear-centre; max 5mm correction
 
 ; Heaters
 M308 S0 P"bedtemp" Y"thermistor" T100000 B3950 ; configure sensor 0 as thermistor on pin bedtemp
