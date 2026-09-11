@@ -13,13 +13,13 @@ G1 H1 Y261 F360 ; move slowly to Y axis endstop once more (second pass)
 G1 Y-22.5 F360 ; move away from the Y endstop
 G1 X-2 F360 ; move away from the X endstop
 G90 ; absolute positioning
-G1 X128 Y128 F2000 ; put head over the centre of the bed
+G1 X168 Y158 F2000 ; move nozzle so the probe (40mm front, 30mm left of nozzle, see G31) lands at bed centre - G30's own X/Y args don't trigger a move without a P index, so position manually
 
 ; Set lower speeds for z homing
 M566 Z5 ; Set maximum instantaneous speed changes (mm/min) (Jerk)
 M203 Z350 ; Set maximum speeds (mm/min)
 M201 Z100 ; Set maximum accelerations (mm/s^2)
- 
+
 ; Probe the bed
 M558 A1 F350 ; Set single probing at faster feed rate
 G30 ; Do a single probe to home our Z axis

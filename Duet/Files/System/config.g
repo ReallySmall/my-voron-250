@@ -18,11 +18,11 @@ M586 P2 S0                                     ; disable Telnet
 ; Drives
 M569 P0 S1                                     ; physical drive 0 goes forwards (X)
 M569 P1 S1                                     ; physical drive 1 goes forwards (Y)
-M569 P2 S0                                     ; physical drive 2 goes backwards (Z front-left)
-M569 P3 S0                                     ; physical drive 3 goes backwards (Z front-right) - direction verified on hardware
-M569 P4 S0                                     ; physical drive 4 goes backwards (Z rear-centre) - direction verified; struggles lifting vs lowering, check coupler/leadscrew for binding
+M569 P2 S1                                     ; physical drive 2 goes forwards (Z front-left) - polarity flipped, Z axis sense was inverted (increasing Z moved bed toward head instead of away)
+M569 P3 S1                                     ; physical drive 3 goes forwards (Z front-right) - polarity flipped, see drive 2 note
+M569 P4 S1                                     ; physical drive 4 goes forwards (Z rear-centre) - polarity flipped, see drive 2 note; struggles lifting vs lowering, check coupler/leadscrew for binding
 M569 P5 S1 R1 T2.5:2.5:5:0                     ; external driver 5 on expansion header (E) - enable polarity R and step timing T per driver datasheet
-M584 X0 Y1 Z2:3:4 E5                           ; set drive mapping - triple Z on drives 2,3,4; extruder on expansion drive 5
+M584 X1 Y0 Z2:3:4 E5                           ; set drive mapping (X/Y drives swapped vs original - Y was homing to the wrong end) - triple Z on drives 2,3,4; extruder on expansion drive 5
 M350 E16 I0                                    ; E microstepping - informational only for external driver, must match the setting on the driver itself
 M350 X16 Y16 Z16 I1                        	   ; configure microstepping with interpolation
 M92 X80.00 Y80.00 Z400.00 E392.00              ; set steps per mm
@@ -43,14 +43,15 @@ M574 Y2 S1 P"ystop"                           ; configure active-high endstop fo
 M574 Z1 S2                                    ; configure Z to use the probe (no Z endstop switch)
 
 ; Z-Probe
-M558 P1 C"zprobe.in+zprobe.mod" H5 F120 T6000  ; Z probe but set dive height, probe speed and travel speed
-M557 X15:240 Y15:240 S25                       ; define mesh grid
-G31 Z2.29									   ; set z trigger offset
+M950 S0 C"exp.heater3"                         ; create servo/GPIO 0 on exp.heater3 - BLTouch control wire is wired here, not to zprobe.mod
+M558 P9 C"^zprobe.in" H5 F120 T6000             ; BLTouch - pullup only, correct polarity now wiring is fixed - set dive height, probe speed and travel speed
+M557 X15:200 Y15:210 S25                       ; define mesh grid - bounds pulled in so the nozzle doesn't overtravel past 256 while placing the offset probe at the grid edge (X tighter than Y: 40mm front/back offset vs 30mm left/right)
+G31 X-40 Y-30 Z2.29 P25						   ; set probe X/Y offset (40mm in front, 30mm left of nozzle - gcode X drives front/back, Y drives left/right on this machine), z trigger offset and trigger value - X/Y offset belongs on G31, not M558 (M558's X/Y params were being silently ignored)
 
 ; Bed leveling (triple Z)
 ; Lead screw positions in M584 Z order: drive 2 = front-left, drive 3 = front-right, drive 4 = rear-centre
-; NOMINAL coordinates - measure the real lead screw positions and correct these
-M671 X-10:266:128 Y-10:-10:266 S5              ; lead screw positions front-left, front-right, rear-centre; max 5mm correction
+; MEASURED coordinates from bed origin (X0 Y0) - front pair sit on the Y0 edge, rear screw is off-centre at X163
+M671 X0:0:320 Y-35:292:128 S20                 ; lead screw positions front-left, front-right, rear-centre; max correction raised to 20mm for now (real tilt needed ~6.8mm and RRF was silently rejecting the whole correction each pass) - X/Y swapped: gcode X drives real front/back, gcode Y drives real left/right on this machine
 
 ; Heaters
 M308 S0 P"bedtemp" Y"thermistor" T100000 B3950 ; configure sensor 0 as thermistor on pin bedtemp
