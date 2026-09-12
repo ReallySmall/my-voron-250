@@ -35,7 +35,7 @@ M915 X Y Z S5 R2							   ; set stall detection
 
 ; Axis Limits
 M208 X0 Y0 Z0 S1                               ; set axis minima
-M208 X256 Y256 Z150 S0                         ; set axis maxima (256mm square bed)
+M208 X251 Y256 Z150 S0                         ; set axis maxima - X reduced from 256 to 251, the X endstop physically triggers 5mm short of the true back edge so 256 was never actually reachable and also caused X0 to overshoot the front edge by the same 5mm
 
 ; Endstops
 M574 X2 S1 P"xstop"                           ; configure active-high endstop for high end on X via pin !xstop
